@@ -1,0 +1,15 @@
+identifier = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+primitive = { (!"," ~ ANY)+ }
+
+string = ${ "\"" ~ inner ~ "\"" }
+inner = @{ char* }
+char = {
+    !("\"" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+
+prop = { identifier ~ "=" ~ (string | primitive) }
+
+struct = { SOI ~ "(" ~ prop ~ ("," ~ prop)* ~ ")" ~ EOI }
