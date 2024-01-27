@@ -23,7 +23,7 @@ cd gateway
 RUST_LOG=debug cargo run
 ```
 
-## Implemented Features
+## Features
 
 ![Screenshot of "Player List"](./assets/player_list.webp)
 
@@ -48,15 +48,24 @@ Following table is corresponding to v0.1.2.0.
 
 Symbols: ✔️(Complete), 🚧 (Work in Progress), ❌ (Incomplete), 🚫 (Impossible)
 
-Teleport commands are not available because it needs player context. If further update allows teleporting players from RCON context, it would be implemented.
+Teleport commands are not available because they need player context. If further update allows teleporting players from RCON context, they would be implemented.
 
 ### Docker API
 
-Unimplemented. Future plan.
+Unimplemented. Possibly will be implemented with [bollard](https://lib.rs/crates/bollard).
+
+### Future Plans
+
+- SteamCMD integration (enabling server update)
+- Container management (enabling server start/restart)
+- Configuration management
+  - Parsing `DefaultPalWorldSettings.ini` is implemented (see `gateway/src/unreal_struct.rs`)
+  - The approach to control the content of `PalWorldSettings.ini` needs to be setteled before editing/generating (or unbanning, since it is not implemented on RCON interface for now) can be implemented
+  - If above is done, the management can be implemented as either a web editor (like [Monaco Editor](https://microsoft.github.io/monaco-editor/)) or a form (harder to maintain)
 
 ## License
 
-SSPL-1.0. In short, you can use, modify, and distribute the software freely under the same license. However, if you provide the software as a service to others (which is the case if you are running game servers as a service *commercially*), you must release the complete source code, including all necessary components, under the SSPL. Contact me for alternative licensing.
+SSPL-1.0. In short, you can use, modify, and distribute the software freely under the same license. However, if you provide the software as a service to others (which is the case if you are running game servers as a service _commercially_), you must release the complete source code, including all necessary components, under the SSPL. Contact me for alternative licensing.
 
 ## Disclaimer
 
