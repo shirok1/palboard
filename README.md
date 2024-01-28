@@ -38,8 +38,8 @@ Following table is corresponding to v0.1.2.0.
 | `/Shutdown {Seconds} {MessageText}` | 🚧       | ✔️      |
 | `/DoExit`                           | 🚧       | ✔️      |
 | `/Broadcast {MessageText}`          | 🚧       | ✔️      |
-| `/KickPlayer {SteamID}`             | 🚧       | ✔️      |
-| `/BanPlayer {SteamID}`              | 🚧       | ✔️      |
+| `/KickPlayer {SteamID}`             | ✔️       | ✔️      |
+| `/BanPlayer {SteamID}`              | ✔️       | ✔️      |
 | `/TeleportToPlayer {SteamID}`       | 🚫       | 🚫      |
 | `/TeleportToMe {SteamID}`           | 🚫       | 🚫      |
 | `/ShowPlayers`                      | ✔️       | ✔️      |
