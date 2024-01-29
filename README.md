@@ -1,5 +1,7 @@
 # PalBoard
 
+[![Build Frontend](https://github.com/shirok1/palboard/actions/workflows/frontend.yml/badge.svg)](https://github.com/shirok1/palboard/actions/workflows/frontend.yml) [![Build Gateway](https://github.com/shirok1/palboard/actions/workflows/gateway.yml/badge.svg)](https://github.com/shirok1/palboard/actions/workflows/gateway.yml)
+
 A [Palworld](https://www.pocketpair.jp/palworld) dashboard, built with [Nuxt](https://nuxtjs.org/) and [Axum](https://github.com/tokio-rs/axum).
 
 ![Screenshot of "Server Info"](./assets/server_info.webp)
