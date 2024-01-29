@@ -19,6 +19,31 @@ const { data: info } = await useFetch<{
   }
 })
 
+const logs = ref<string>("")
+const updateModal = ref(false)
+const updateOkDisabled = ref(true)
+const update_steam = async () => {
+  logs.value = ""
+  updateModal.value = true
+  updateOkDisabled.value = true
+  const ws = await new Promise<WebSocket>((resolve, reject) => {
+    const ws = new WebSocket("ws://localhost:1145/update_steam") // TODO: fix websocket proxy
+    ws.onopen = () => resolve(ws)
+    ws.onerror = (e) => reject(e)
+  })
+  ws.onmessage = async ({ data }) => {
+    if (data instanceof Blob) {
+      const text = await data.text();
+      logs.value += text;
+    } else {
+      // Handle other data types
+      console.log("Received non blob data:", data);
+    }
+  }
+  await new Promise((resolve) => ws.onclose = () => resolve(null))
+  updateOkDisabled.value = false
+}
+
 const { data: serverUpdates } = await useFetch<FeedEntry[]>(
   '/proxy/steamdb/PatchnotesRSS/?appid=2394010', {
   parseResponse: (text) => extractFromXml(text).entries?.map((e) => ({
@@ -59,7 +84,24 @@ const shutdownModal = ref(false)
       </div>
       <div class="flex justify-end px-3 gap-2">
         <UButton color="primary" variant="solid" label="Broadcast" icon="i-heroicons-chat-bubble-bottom-center-text" />
-        <UButton disabled color="primary" variant="outline" label="Update" icon="i-heroicons-arrow-path-rounded-square" />
+        <UButton @click="update_steam" color="primary" variant="outline" label="Update"
+          icon="i-heroicons-arrow-path-rounded-square" />
+        <UModal v-model="updateModal">
+          <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
+            <template #header>
+              Updating Steam...
+            </template>
+            <div class="flex flex-col gap-2">
+              <UTextarea v-model="logs" disabled autoresize placeholder="Waiting..." />
+            </div>
+            <template #footer>
+              <div class="flex gap-2 justify-end">
+                <UButton :disabled="updateOkDisabled" @click="updateModal = false"
+                  :color="updateOkDisabled ? 'gray' : 'primary'" variant="solid" label="OK" />
+              </div>
+            </template>
+          </UCard>
+        </UModal>
         <UButton @click="shutdownModal = true" color="red" variant="solid" label="Shutdown" icon="i-heroicons-power" />
         <UModal v-model="shutdownModal">
           <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
