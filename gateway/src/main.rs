@@ -152,5 +152,25 @@ async fn main() {
     .await
     .unwrap();
     info!("Listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(async move {
+            #[cfg(unix)]
+            {
+                use tokio::signal::unix::{signal, SignalKind};
+                let mut sigint = signal(SignalKind::interrupt()).unwrap();
+                let mut sigterm = signal(SignalKind::terminate()).unwrap();
+                tokio::select! {
+                    _ = sigint.recv() => info!("SIGINT"),
+                    _ = sigterm.recv() => info!("SIGTERM")
+                }
+            }
+            #[cfg(not(unix))]
+            {
+                tokio::signal::ctrl_c()
+                    .await
+                    .expect("failed to install CTRL+C signal handler");
+            }
+        })
+        .await
+        .unwrap();
 }
