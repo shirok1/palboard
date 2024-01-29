@@ -15,7 +15,7 @@
 // }
 
 use axum::{
-    extract::State,
+    extract::{State, WebSocketUpgrade},
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -118,6 +118,10 @@ async fn save_handler(State(mut c): State<PalServerClient>) -> AppResult<impl In
     Ok(c.save().await?)
 }
 
+async fn update_steam_handler(ws: WebSocketUpgrade) -> Response {
+    ws.on_upgrade(palboard_gateway::steamcmd::update_steam)
+}
+
 #[tokio::main]
 async fn main() {
     console_subscriber::init();
@@ -143,6 +147,7 @@ async fn main() {
         .route("/players", get(players_handler))
         .route("/info", get(info_handler))
         .route("/save", post(save_handler))
+        .route("/update_steam", get(update_steam_handler))
         .with_state(client);
 
     let listener = tokio::net::TcpListener::bind(env::var("GATEWAY_ADDR").unwrap_or_else(|_| {
