@@ -53,7 +53,7 @@ Following table is corresponding to v0.1.2.0.
 | `/TeleportToMe {SteamID}`           | 🚫       | 🚫      |
 | `/ShowPlayers`                      | ✔️       | ✔️      |
 | `/Info`                             | ✔️       | ✔️      |
-| `/Save`                             | 🚧       | ✔️      |
+| `/Save`                             | ✔️       | ✔️      |
 
 Symbols: ✔️(Complete), 🚧 (Work in Progress), ❌ (Incomplete), 🚫 (Impossible)
 
