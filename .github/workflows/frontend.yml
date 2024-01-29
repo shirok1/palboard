@@ -1,12 +1,13 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow
 name: Build Frontend
 
 on:
   push:
     branches: [ "main" ]
-    paths: [ "frontend" ]
+    paths: [ "frontend/**" ]
   pull_request:
     branches: [ "main" ]
-    paths: [ "frontend" ]
+    paths: [ "frontend/**" ]
 
 defaults:
  run:

@@ -1,12 +1,13 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow
 name: Build Gateway
 
 on:
   push:
     branches: [ "main" ]
-    paths: [ "gateway" ]
+    paths: [ "gateway/**" ]
   pull_request:
     branches: [ "main" ]
-    paths: [ "gateway" ]
+    paths: [ "gateway/**" ]
 
 env:
   CARGO_TERM_COLOR: always
