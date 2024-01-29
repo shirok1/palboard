@@ -9,7 +9,8 @@ A [Palworld](https://www.pocketpair.jp/palworld) dashboard, built with [Nuxt](ht
 ### Docker Compose
 
 ```bash
-docker compose up --build
+docker compose build --build-arg VERSION=$(git describe --tags --always --broken)
+docker compose up # `docker compose up gateway` for gateway only
 ```
 
 ### Local

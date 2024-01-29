@@ -28,6 +28,8 @@ use std::env;
 use thiserror::Error;
 use tracing::{info, warn};
 
+const VERSION: Option<&str> = option_env!("VERSION");
+
 #[derive(Error, Debug)]
 enum AppError {
     #[error("error from the inner RCON client")]
@@ -139,6 +141,7 @@ async fn main() {
     };
 
     let app = Router::new()
+        .route("/version", get(VERSION.unwrap_or("unknown")))
         .route("/shutdown", post(shutdown_handler))
         .route("/exit", post(exit_handler))
         .route("/broadcast", post(broadcast_handler))

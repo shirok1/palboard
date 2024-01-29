@@ -64,6 +64,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_BASENAME }}-${{ matrix.context }}
 
+      - name: Generate git describe
+        id: git-describe
+        run: echo "VERSION=$(git describe --tags --always --broken)" >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -77,6 +81,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
+          build-args:
+          - VERSION=${{ steps.git-describe.outputs.VERSION }}
 
       - name: Inspect image
         run: |

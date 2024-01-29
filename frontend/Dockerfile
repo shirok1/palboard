@@ -10,6 +10,7 @@ COPY package.json bun.lockb ./
 RUN bun install
 
 COPY . .
+ARG VERSION
 RUN bun run build
 
 # runtime stage
