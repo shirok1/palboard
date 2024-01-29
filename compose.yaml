@@ -1,0 +1,26 @@
+services:
+  gateway:
+    build:
+      context: gateway
+      target: final
+    volumes:
+      - steamcmd-login:/home/steam/Steam # for perssisting Steam login
+      - steamcmd:/home/steam/steamcmd # for perssisting updates of SteamCMD itself
+      - ./palserver:/home/steam/palserver # create this directory ahead of time, then either chmod 777 or chown to someone with UID 1000
+    environment:
+      - RUST_LOG=debug
+      - PALSERVER_ADDR=172.17.0.1:25575
+      - PALSERVER_PASSWORD=adminPasswordHere
+    # ports:
+    #   - 1145:8080 # only for developing
+  frontend:
+    build:
+      context: frontend
+      target: final
+    environment:
+      - NUXT_GATEWAY_ADDR=gateway:8080
+    ports:
+      - 3000:3000 # change "3000" on the left
+volumes:
+  steamcmd-login:
+  steamcmd:

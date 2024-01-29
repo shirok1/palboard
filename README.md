@@ -6,6 +6,14 @@ A [Palworld](https://www.pocketpair.jp/palworld) dashboard, built with [Nuxt](ht
 
 ## Development
 
+### Docker Compose
+
+```bash
+docker compose up --build
+```
+
+### Local
+
 You need to install [Node.js](https://nodejs.org/) and [Bun](https://bun.sh/) to build frontend and [Rust](https://www.rust-lang.org/learn/get-started) to build gateway. Other Node.js package managers (e.g. `npm`, `yarn`) won't utilize `bun.lockb` and the build result may be different, so no guarantee.
 
 ```bash
