@@ -2,7 +2,7 @@
 
 # build stage
 
-ARG RUST_VERSION=1.75.0
+ARG RUST_VERSION=1
 ARG APP_NAME=palboard-gateway
 FROM rust:${RUST_VERSION}-slim-bullseye AS build
 ARG APP_NAME
@@ -23,6 +23,9 @@ EOF
 # runtime stage
 
 FROM cm2network/steamcmd:latest AS final
+LABEL org.opencontainers.image.source=https://github.com/shirok1/palboard
+LABEL org.opencontainers.image.description="PalBoard gateway"
+LABEL org.opencontainers.image.licenses=SSPL-1.0
 
 COPY --from=build /bin/gateway /bin/
 

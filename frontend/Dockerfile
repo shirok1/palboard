@@ -2,7 +2,7 @@
 
 # build stage
 
-ARG BUN_VERSION=1.0
+ARG BUN_VERSION=1
 FROM oven/bun:${BUN_VERSION}-slim AS build
 WORKDIR /app
 
@@ -15,6 +15,9 @@ RUN bun nuxt build
 # runtime stage
 
 FROM oven/bun:${BUN_VERSION}-slim AS final
+LABEL org.opencontainers.image.source=https://github.com/shirok1/palboard
+LABEL org.opencontainers.image.description="PalBoard frontend"
+LABEL org.opencontainers.image.licenses=SSPL-1.0
 
 COPY --from=build /app/.output /app
 
