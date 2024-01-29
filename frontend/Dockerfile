@@ -10,7 +10,7 @@ COPY package.json bun.lockb ./
 RUN bun install
 
 COPY . .
-RUN bun nuxt build
+RUN bun run build
 
 # runtime stage
 
