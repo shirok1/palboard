@@ -36,7 +36,7 @@ impl PalServerClient {
                 Ok(None) => break,
                 Ok(Some((command, tx))) => {
                     let result = client.exec(command).await;
-                    if let Err(_) = tx.send(result) {
+                    if tx.send(result).is_err() {
                         tracing::error!("failed to send result back");
                         break;
                     };
@@ -44,7 +44,7 @@ impl PalServerClient {
                 Err(_) => {
                     // timeout, send a keepalive
                     let res = client.exec("ShowPlayers").await;
-                    if let Err(_) = res {
+                    if res.is_err() {
                         tracing::error!("failed to send keepalive");
                         break;
                     }
