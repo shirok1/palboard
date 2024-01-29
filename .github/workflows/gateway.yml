@@ -3,8 +3,10 @@ name: Build Gateway
 on:
   push:
     branches: [ "main" ]
+    paths: [ "gateway" ]
   pull_request:
     branches: [ "main" ]
+    paths: [ "gateway" ]
 
 env:
   CARGO_TERM_COLOR: always
