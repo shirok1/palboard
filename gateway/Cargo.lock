@@ -963,6 +963,7 @@ dependencies = [
  "futures-util",
  "pest",
  "pest_derive",
+ "regex",
  "rust-ini",
  "serde",
  "serde_json",

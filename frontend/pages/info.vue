@@ -37,6 +37,7 @@ const updateDropdownItems = [
     }
   }]
 ]
+const updateLastMessage = ref<UpdateSteamMessage>()
 const update_steam = async (query: { game: false } | { game: true, validate: boolean }) => {
   logs.value = ""
   updateModal.value = true
@@ -54,6 +55,20 @@ const update_steam = async (query: { game: false } | { game: true, validate: boo
     if (data instanceof Blob) {
       const text = await data.text();
       logs.value += text;
+    } else if (typeof data === "string") {
+      const msg: UpdateSteamMessage = JSON.parse(data);
+      if (msg.type === "steam_self_update") {
+        console.log(`Steam self update: ${msg.status}`);
+      } else if (msg.type === "update_state") {
+        console.log(`Update state: ${msg.state_name} (${msg.progress}%)`);
+      } else if (msg.type === "success") {
+        console.log("Update success");
+      } else if (msg.type === "error") {
+        console.log("Update error");
+      } else {
+        console.log("Received unknown message:", msg);
+      }
+      updateLastMessage.value = msg
     } else {
       // Handle other data types
       console.log("Received non blob data:", data);
@@ -113,10 +128,21 @@ const shutdownModal = ref(false)
         <UModal v-model="updateModal" :ui="{ width: 'w-full sm:max-w-2xl' }" prevent-close>
           <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
             <template #header>
-              Updating...
+              {{
+                updateLastMessage?.type === 'update_state' ? `Stage: ${updateLastMessage.state_name} (${updateLastMessage.progress}%)`
+                : updateLastMessage?.type === 'steam_self_update' ? 'Updating Steam...'
+                  : updateLastMessage?.type === 'success' ? 'Update success'
+                    : updateLastMessage?.type === 'error' ? 'Update error'
+                      : 'Updating...'
+              }}
             </template>
             <div class="flex flex-col gap-2">
               <UTextarea v-model="logs" disabled autoresize placeholder="Waiting..." />
+              <UProgress
+                :color="updateLastMessage?.type === 'error' ? 'red' : updateLastMessage?.type === 'success' ? 'green' : 'primary'"
+                :value="updateLastMessage?.type === 'update_state' ? (+updateLastMessage.progress)
+                  : updateLastMessage?.type === 'success' ? 100
+                    : updateLastMessage?.type === 'error' ? 100 : undefined" />
             </div>
             <template #footer>
               <div class="flex gap-2 justify-end">

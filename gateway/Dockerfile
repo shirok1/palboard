@@ -21,6 +21,16 @@ cargo build --locked --release
 cp ./target/release/$APP_NAME /bin/gateway
 EOF
 
+# extract stdbuf
+
+# use same base image for convenience
+FROM cm2network/steamcmd:latest AS stdbuf
+
+USER root
+RUN dpkg --add-architecture i386 && \
+    apt update && \
+    apt install -y --allow-remove-essential coreutils:i386
+
 # runtime stage
 
 FROM cm2network/steamcmd:latest AS final
@@ -28,6 +38,7 @@ LABEL org.opencontainers.image.source=https://github.com/shirok1/palboard
 LABEL org.opencontainers.image.description="PalBoard gateway"
 LABEL org.opencontainers.image.licenses=SSPL-1.0
 
+COPY --from=stdbuf /usr/bin/stdbuf /usr/libexec/coreutils/libstdbuf.so /bin/
 COPY --from=build /bin/gateway /bin/
 
 EXPOSE 8080

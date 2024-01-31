@@ -1,4 +1,5 @@
 use axum::extract::ws::WebSocket;
+use serde::Serialize;
 use thiserror::Error;
 use tokio::{
     io::AsyncBufReadExt,
@@ -20,11 +21,7 @@ pub enum UpdateType {
     Steam,
     Game { validate: bool },
 }
-const STEAMCMD_UPDATE_ARGS: &[&str] = &[
-    "+login",
-    "anonymous",
-    "+quit",
-];
+const STEAMCMD_UPDATE_ARGS: &[&str] = &["+login", "anonymous", "+quit"];
 const STEAMCMD_UPDATE_GAME_ARGS: &[&str] = &[
     "+force_install_dir",
     "/home/steam/palserver",
@@ -57,7 +54,9 @@ type SteamCMDResult<T> = Result<T, SteamCMDError>;
 pub async fn run_steamcmd(
     args: impl IntoIterator<Item = impl AsRef<OsStr>>,
 ) -> SteamCMDResult<(Child, ReaderStream<ChildStdout>)> {
-    let mut child = Command::new(STEAMCMD_EXE)
+    let mut child = Command::new("/bin/stdbuf")
+        .arg("--output=0")
+        .arg(STEAMCMD_EXE)
         .args(args)
         .stdout(Stdio::piped())
         .spawn()
@@ -68,6 +67,66 @@ pub async fn run_steamcmd(
     let stdout = ReaderStream::new(child.stdout.take().unwrap());
 
     Ok((child, stdout))
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+enum UpdateSteamMessage {
+    SteamSelfUpdate {
+        status: String,
+    },
+    UpdateState {
+        state_id: u32,
+        state_name: String,
+        progress: String,
+        current: u64,
+        total: u64,
+    },
+    Success,
+    Error {
+        reason: String,
+    },
+}
+
+fn parse_line(line: &str) -> Option<UpdateSteamMessage> {
+    // TODO: reusing regexes
+    let update_state_pattern = regex::Regex::new(r"^ Update state \(0x(?<state_id>[\da-f]+)\) (?<state_name>[\w ]+), progress: (?<progress>\d*\.\d*) \((?<current>\d+) \/ (?<total>\d+)\)$").unwrap();
+    let steam_self_update_pattern = regex::Regex::new(r"^\[....\] (.+)$").unwrap();
+    let error_pattern = regex::Regex::new(r"^ERROR!.+\((.+)\)$").unwrap();
+
+    if line.starts_with("Success!") {
+        return Some(UpdateSteamMessage::Success);
+    }
+
+    if let Some(cap) = steam_self_update_pattern.captures(&line) {
+        let (_, [status]) = cap.extract();
+        let status = status.to_string();
+        return Some(UpdateSteamMessage::SteamSelfUpdate { status });
+    }
+
+    if let Some(cap) = error_pattern.captures(&line) {
+        let (_, [reason]) = cap.extract();
+        let reason = reason.to_string();
+        return Some(UpdateSteamMessage::Error { reason });
+    }
+
+    if let Some(cap) = update_state_pattern.captures(&line) {
+        let (_, [state_id, state_name, progress, current, total]) = cap.extract();
+        let state_id = u32::from_str_radix(state_id, 16).unwrap();
+        let current = u64::from_str_radix(current, 10).unwrap();
+        let total = u64::from_str_radix(total, 10).unwrap();
+        let state_name = state_name.to_string();
+        let progress = progress.to_string();
+        return Some(UpdateSteamMessage::UpdateState {
+            state_id,
+            state_name,
+            progress,
+            current,
+            total,
+        });
+    }
+
+    None
 }
 
 #[instrument(skip_all)]
@@ -92,12 +151,17 @@ pub async fn update_steam(ws: WebSocket, update_type: UpdateType) {
         async move {
             while let Some(line) = lines.next_line().await.unwrap() {
                 debug!("parsing line: {}", line);
-                ws_lr
-                    .lock()
-                    .await
-                    .send(axum::extract::ws::Message::Text(line))
-                    .await
-                    .unwrap();
+
+                if let Some(msg) = parse_line(&line) {
+                    ws_lr
+                        .lock()
+                        .await
+                        .send(axum::extract::ws::Message::Text(
+                            serde_json::to_string(&msg).unwrap(),
+                        ))
+                        .await
+                        .unwrap();
+                }
             }
             debug!("exit");
         }
