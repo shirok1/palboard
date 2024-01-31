@@ -2,9 +2,10 @@
 name: Build Docker Image
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - master
+      - main
     tags:
       - v*
 
@@ -81,8 +82,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
-          build-args:
-          - VERSION=${{ steps.git-describe.outputs.VERSION }}
+          build-args: |
+            VERSION=${{ steps.git-describe.outputs.VERSION }}
 
       - name: Inspect image
         run: |
