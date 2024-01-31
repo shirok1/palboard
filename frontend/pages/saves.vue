@@ -8,7 +8,7 @@
 <script setup lang="ts">
 const toast = useToast()
 const do_save = async () => {
-  const res = await $fetch<string>(`/proxy/gateway/save`, {
+  const res = await $fetch<string>(`/proxy/gateway/pal/save`, {
     method: 'POST'
   })
   const title_type = 'Save'

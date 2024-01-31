@@ -5,7 +5,7 @@ import { extractFromXml, type FeedData, type FeedEntry } from '@extractus/feed-e
 const { data: info } = await useFetch<{
   version: string;
   name: string;
-}>('/proxy/gateway/info', {
+}>('/proxy/gateway/pal/info', {
   parseResponse: (text) => {
     const regex = /\[v([\d\.]+)\] (.+)/g;
     const matches = regex.exec(text);
@@ -27,7 +27,8 @@ const update_steam = async () => {
   updateModal.value = true
   updateOkDisabled.value = true
   const ws = await new Promise<WebSocket>((resolve, reject) => {
-    const ws = new WebSocket("ws://localhost:1145/update_steam") // TODO: fix websocket proxy
+    const url = "ws://localhost:1145/steam/update"
+    const ws = new WebSocket(url) // TODO: fix websocket proxy
     ws.onopen = () => resolve(ws)
     ws.onerror = (e) => reject(e)
   })

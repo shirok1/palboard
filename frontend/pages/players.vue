@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const { data: players, refresh: refreshPlayers } = await useFetch<Player[]>('/proxy/gateway/players')
+const { data: players, refresh: refreshPlayers } = await useFetch<Player[]>('/proxy/gateway/pal/players')
 const page = ref(1)
 const pageCount = 5
 const rows = computed(() => {
@@ -10,7 +10,7 @@ const rows = computed(() => {
 
 const toast = useToast()
 const kick_or_ban = async (type: 'kick' | 'ban', steamid: string) => {
-  const res = await $fetch<string>(`/proxy/gateway/${type}`, {
+  const res = await $fetch<string>(`/proxy/gateway/pal/${type}`, {
     method: 'POST',
     body: { steamid }
   })

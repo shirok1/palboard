@@ -142,6 +142,9 @@ async fn main() {
 
     let app = Router::new()
         .route("/version", get(VERSION.unwrap_or("unknown")))
+        .nest(
+            "/pal",
+            Router::new()
         .route("/shutdown", post(shutdown_handler))
         .route("/exit", post(exit_handler))
         .route("/broadcast", post(broadcast_handler))
@@ -150,8 +153,12 @@ async fn main() {
         .route("/players", get(players_handler))
         .route("/info", get(info_handler))
         .route("/save", post(save_handler))
-        .route("/update_steam", get(update_steam_handler))
-        .with_state(client);
+                .with_state(client),
+        )
+        .nest(
+            "/steam",
+            Router::new().route("/update", get(update_steam_handler)),
+        );
 
     let listener = tokio::net::TcpListener::bind(env::var("GATEWAY_ADDR").unwrap_or_else(|_| {
         warn!("you should set `GATEWAY_ADDR` environment variable, frontend will connect to this address");
