@@ -73,7 +73,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./${{ matrix.context }}
-          file: ./Dockerfile
           target: final
           builder: ${{ steps.buildx.outputs.name }}
           platforms: linux/amd64,linux/arm64
