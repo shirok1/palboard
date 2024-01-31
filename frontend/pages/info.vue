@@ -61,7 +61,7 @@ const { data: clientUpdates } = await useFetch<FeedEntry[]>(
 })
 const updates = computed(() =>
   [...clientUpdates.value ?? [], ...serverUpdates.value ?? []]
-    .sort((a, b) => b.published - a.published))
+    .sort((a, b) => (b.published?.getTime() ?? 0) - (a.published?.getTime() ?? 0)))
 
 const page = ref(1)
 const pageCount = 8
