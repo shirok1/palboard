@@ -15,7 +15,7 @@
 // }
 
 use axum::{
-    extract::{State, WebSocketUpgrade},
+    extract::{Query, State, WebSocketUpgrade},
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -120,8 +120,22 @@ async fn save_handler(State(mut c): State<PalServerClient>) -> AppResult<impl In
     Ok(c.save().await?)
 }
 
-async fn update_steam_handler(ws: WebSocketUpgrade) -> Response {
-    ws.on_upgrade(palboard_gateway::steamcmd::update_steam)
+#[derive(Debug, Deserialize)]
+struct UpdateSteamQuery {
+    game: Option<bool>,
+    validate: Option<bool>,
+}
+async fn update_steam_handler(ws: WebSocketUpgrade, Query(q): Query<UpdateSteamQuery>) -> Response {
+    use palboard_gateway::steamcmd::UpdateType;
+    let update_type = if q.game.unwrap_or(false) {
+        UpdateType::Game {
+            validate: q.validate.unwrap_or(true),
+        }
+    } else {
+        UpdateType::Steam
+    };
+
+    ws.on_upgrade(|ws| palboard_gateway::steamcmd::update_steam(ws, update_type))
 }
 
 #[tokio::main]
@@ -145,14 +159,14 @@ async fn main() {
         .nest(
             "/pal",
             Router::new()
-        .route("/shutdown", post(shutdown_handler))
-        .route("/exit", post(exit_handler))
-        .route("/broadcast", post(broadcast_handler))
-        .route("/kick", post(kick_handler))
-        .route("/ban", post(ban_handler))
-        .route("/players", get(players_handler))
-        .route("/info", get(info_handler))
-        .route("/save", post(save_handler))
+                .route("/shutdown", post(shutdown_handler))
+                .route("/exit", post(exit_handler))
+                .route("/broadcast", post(broadcast_handler))
+                .route("/kick", post(kick_handler))
+                .route("/ban", post(ban_handler))
+                .route("/players", get(players_handler))
+                .route("/info", get(info_handler))
+                .route("/save", post(save_handler))
                 .with_state(client),
         )
         .nest(

@@ -22,12 +22,30 @@ const { data: info } = await useFetch<{
 const logs = ref<string>("")
 const updateModal = ref(false)
 const updateOkDisabled = ref(true)
-const update_steam = async () => {
+const updateDropdownItems = [
+  [{
+    label: 'Update w/o Validation',
+    icon: "i-heroicons-bug-ant",
+    click: () => {
+      update_steam({ game: true, validate: false })
+    }
+  }], [{
+    label: 'Update Steam',
+    icon: "i-mdi-steam",
+    click: () => {
+      update_steam({ game: false })
+    }
+  }]
+]
+const update_steam = async (query: { game: false } | { game: true, validate: boolean }) => {
   logs.value = ""
   updateModal.value = true
   updateOkDisabled.value = true
   const ws = await new Promise<WebSocket>((resolve, reject) => {
-    const url = "ws://localhost:1145/steam/update"
+    const url = "ws://localhost:1145/steam/update?"
+      + (query.game
+        ? `game=true&validate=${query.validate}`
+        : `game=false`)
     const ws = new WebSocket(url) // TODO: fix websocket proxy
     ws.onopen = () => resolve(ws)
     ws.onerror = (e) => reject(e)
@@ -85,12 +103,17 @@ const shutdownModal = ref(false)
       </div>
       <div class="flex justify-end px-3 gap-2">
         <UButton color="primary" variant="solid" label="Broadcast" icon="i-heroicons-chat-bubble-bottom-center-text" />
-        <UButton @click="update_steam" color="primary" variant="outline" label="Update"
-          icon="i-heroicons-arrow-path-rounded-square" />
-        <UModal v-model="updateModal">
+        <UButtonGroup orientation="horizontal">
+          <UButton @click="update_steam({ game: true, validate: true })" color="white" label="Update Server"
+            icon="i-heroicons-arrow-path-rounded-square" />
+          <UDropdown :items="updateDropdownItems" :popper="{ placement: 'bottom-end' }">
+            <UButton color="gray" icon="i-heroicons-chevron-down-20-solid" />
+          </UDropdown>
+        </UButtonGroup>
+        <UModal v-model="updateModal" :ui="{ width: 'w-full sm:max-w-2xl' }" prevent-close>
           <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
             <template #header>
-              Updating Steam...
+              Updating...
             </template>
             <div class="flex flex-col gap-2">
               <UTextarea v-model="logs" disabled autoresize placeholder="Waiting..." />

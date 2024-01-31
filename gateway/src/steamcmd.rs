@@ -15,12 +15,33 @@ use std::process::Stdio;
 use std::sync::Arc;
 
 const STEAMCMD_EXE: &str = "/home/steam/steamcmd/steamcmd.sh"; // as in cm2network/steamcmd
+#[derive(Debug)]
+pub enum UpdateType {
+    Steam,
+    Game { validate: bool },
+}
 const STEAMCMD_UPDATE_ARGS: &[&str] = &[
+    "+login",
+    "anonymous",
+    "+quit",
+];
+const STEAMCMD_UPDATE_GAME_ARGS: &[&str] = &[
     "+force_install_dir",
     "/home/steam/palserver",
     "+login",
     "anonymous",
-    // "+app_update", "2394010", "validate",
+    "+app_update",
+    "2394010",
+    "validate",
+    "+quit",
+];
+const STEAMCMD_UPDATE_GAME_NO_VALIDATE_ARGS: &[&str] = &[
+    "+force_install_dir",
+    "/home/steam/palserver",
+    "+login",
+    "anonymous",
+    "+app_update",
+    "2394010",
     "+quit",
 ];
 const BUFFER_SIZE: usize = 128;
@@ -50,8 +71,14 @@ pub async fn run_steamcmd(
 }
 
 #[instrument(skip_all)]
-pub async fn update_steam(ws: WebSocket) {
-    let (mut child, mut stdout) = run_steamcmd(STEAMCMD_UPDATE_ARGS).await.unwrap();
+pub async fn update_steam(ws: WebSocket, update_type: UpdateType) {
+    let (mut child, mut stdout) = run_steamcmd(match update_type {
+        UpdateType::Steam => STEAMCMD_UPDATE_ARGS,
+        UpdateType::Game { validate: true } => STEAMCMD_UPDATE_GAME_ARGS,
+        UpdateType::Game { .. } => STEAMCMD_UPDATE_GAME_NO_VALIDATE_ARGS,
+    })
+    .await
+    .unwrap();
 
     let (tx, rx) = mpsc::channel(BUFFER_SIZE);
 
