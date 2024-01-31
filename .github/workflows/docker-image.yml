@@ -67,12 +67,12 @@ jobs:
 
       - name: Generate git describe
         id: git-describe
-        run: echo "VERSION=$(git describe --tags --always --broken)" >> "$GITHUB_OUTPUT"
+        run: tee "VERSION=$(git describe --tags --always --broken)" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.context }}
+          context: ./${{ matrix.context }}
           file: ./Dockerfile
           target: final
           builder: ${{ steps.buildx.outputs.name }}
