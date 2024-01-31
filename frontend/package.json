@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@extractus/feed-extractor": "^7.0.9",
+    "@iconify-json/mdi": "^1.1.64",
     "@nuxt/ui": "^2.12.3",
     "@pinia/nuxt": "^0.5.1",
     "h3-proxy": "^1.12.0",

@@ -10,5 +10,8 @@ export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@pinia/nuxt'],
   routeRules: {
     '/proxy/steamdb/**': { proxy: { to: "https://steamdb.info/api/**" } },
+  },
+  ui: {
+    icons: ["mdi", "heroicons"]
   }
 })
