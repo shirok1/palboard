@@ -1,5 +1,9 @@
 <template>
-  <UVerticalNavigation class="" :links="[{
+  <UVerticalNavigation :links="links" :ui="{ label: 'truncate relative hidden sm:block', wrapper: 'float-left pr-4' }" />
+</template>
+
+<script setup lang="ts">
+const links = [{
   label: 'Home',
   icon: 'i-heroicons-home',
   to: '/'
@@ -15,5 +19,5 @@
   label: 'Saves Management',
   icon: 'i-heroicons-archive-box',
   to: '/saves'
-}]" />
-</template>
+}]
+</script>

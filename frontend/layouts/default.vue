@@ -1,5 +1,5 @@
 <template>
-  <div class="w-screen h-screen flex p-4">
+  <div class="p-4">
     <SideNav />
     <UContainer>
       <slot />
