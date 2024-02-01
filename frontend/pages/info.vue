@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { extractFromXml, type FeedData, type FeedEntry } from '@extractus/feed-extractor'
 
 const { data: info } = await useFetch<{
   version: string;
@@ -77,30 +76,6 @@ const update_steam = async (query: { game: false } | { game: true, validate: boo
   await new Promise((resolve) => ws.onclose = () => resolve(null))
   updateOkDisabled.value = false
 }
-
-const { data: serverUpdates } = await useFetch<FeedEntry[]>(
-  '/proxy/steamdb/PatchnotesRSS/?appid=2394010', {
-  parseResponse: (text) => extractFromXml(text).entries?.map((e) => ({
-    ...e,
-    ...e.published && { published: new Date(e.published) },
-  })),
-})
-const { data: clientUpdates } = await useFetch<FeedEntry[]>(
-  '/proxy/steamdb/PatchnotesRSS/?appid=1623730', {
-  parseResponse: (text) => extractFromXml(text).entries?.map((e) => ({
-    ...e,
-    ...e.published && { published: new Date(e.published) },
-  })),
-})
-const updates = computed(() =>
-  [...clientUpdates.value ?? [], ...serverUpdates.value ?? []]
-    .sort((a, b) => (b.published?.getTime() ?? 0) - (a.published?.getTime() ?? 0)))
-
-const page = ref(1)
-const pageCount = 8
-const rows = computed(() => {
-  return updates.value?.slice((page.value - 1) * pageCount, (page.value) * pageCount)
-})
 
 const shutdownModal = ref(false)
 </script>
@@ -183,26 +158,7 @@ const shutdownModal = ref(false)
     <!-- <UDivider /> -->
     <div class="">
       <h1 class="text-2xl">Patch Notes</h1>
-      <UTable :loading="updates === undefined" :rows="rows" :columns="[{
-        key: 'id',
-        label: 'ID'
-      }, {
-        key: 'title',
-        label: 'Title'
-      }, {
-        key: 'published',
-        label: 'Published'
-      }]">
-        <template #title-data="{ row }: { row: FeedEntry }">
-          <a class="underline" target="_blank" :href="row.link">{{ row.title }}</a>
-        </template>
-        <template #published-data="{ row }: { row: FeedEntry }">
-          {{ row.published?.toLocaleString() ?? "Unavailable" }}
-        </template>
-      </UTable>
-      <div class="flex justify-end px-3 py-3.5 border-t border-gray-200 dark:border-gray-700">
-        <UPagination v-if="updates" v-model="page" :page-count="pageCount" :total="updates.length" />
-      </div>
+      <InfoPatchNotes :pageCount="8" />
     </div>
   </div>
 </template>
