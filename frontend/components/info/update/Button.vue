@@ -1,6 +1,7 @@
 <template>
   <UButtonGroup orientation="horizontal">
     <UButton @click="update({ game: true, validate: true })" color="white" label="Update Server"
+      :ui="{ truncate: 'hidden sm:block' }" truncate
       icon="i-heroicons-arrow-path-rounded-square" />
     <UDropdown :items="dropdownItems" :popper="{ placement: 'bottom-end' }">
       <UButton color="gray" icon="i-heroicons-chevron-down-20-solid" />
