@@ -1,23 +1,6 @@
-// fn main() {
-//     let i = Ini::load_from_file("/Users/shiroki/Downloads/DefaultPalWorldSettings.ini").unwrap();
-//     for (sec, prop) in i.iter() {
-//         println!("Section: {:?}", sec);
-//         for (k, v) in prop.iter() {
-//             // println!("{}:{}", k, v);
-//             if v.starts_with('(') && v.ends_with(')') {
-//                 // assume as Unreal config struct
-//                 println!("{k}: {:?}", gateway_rs::unreal_struct::parse_struct(v));
-//             } else {
-//                 println!("{k}: {v}");
-//             }
-//         }
-//     }
-// }
-
 use axum::{routing::get, Router};
 use palboard_gateway::{
-    pal::{self, PalServerClient},
-    steamcmd,
+    game_config, pal::{self, PalServerClient}, steamcmd
 };
 use std::env;
 use tracing::{info, warn};
@@ -43,7 +26,8 @@ async fn main() {
     let app = Router::new()
         .route("/version", get(VERSION.unwrap_or("unknown")))
         .nest("/pal", pal::route::new_router(client))
-        .nest("/steam", steamcmd::route::new_router());
+        .nest("/steam", steamcmd::route::new_router())
+        .nest("/game_config", game_config::route::new_router("/home/steam/palserver/"));
 
     let listener = tokio::net::TcpListener::bind(env::var("GATEWAY_ADDR").unwrap_or_else(|_| {
         warn!("you should set `GATEWAY_ADDR` environment variable, frontend will connect to this address");

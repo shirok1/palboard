@@ -7,12 +7,14 @@ use thiserror::Error;
 pub mod pal;
 pub mod rcon;
 pub mod steamcmd;
-pub mod unreal_struct;
+pub mod game_config;
 
 #[derive(Error, Debug)]
 enum AppError {
     #[error("error from the inner RCON client")]
     PalworldCommandError(#[from] pal::PalworldCommandError),
+    #[error("error during IO")]
+    IOError(#[from] std::io::Error),
 }
 
 impl IntoResponse for AppError {

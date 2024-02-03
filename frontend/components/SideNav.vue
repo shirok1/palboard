@@ -19,5 +19,9 @@ const links = [{
   label: 'Saves Management',
   icon: 'i-heroicons-archive-box',
   to: '/saves'
+}, {
+  label: 'Config Editor',
+  icon: 'i-heroicons-adjustments-horizontal',
+  to: '/editor'
 }]
 </script>

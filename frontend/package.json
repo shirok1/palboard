@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@extractus/feed-extractor": "^7.0.9",
+    "@guolao/vue-monaco-editor": "^1.5.0",
     "@iconify-json/mdi": "^1.1.64",
     "@nuxt/ui": "^2.12.3",
     "@pinia/nuxt": "^0.5.1",

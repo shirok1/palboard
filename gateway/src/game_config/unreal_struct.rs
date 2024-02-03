@@ -2,7 +2,7 @@ use pest::Parser;
 use pest_derive::Parser;
 
 #[derive(Parser)]
-#[grammar = "unreal_struct.pest"]
+#[grammar = "game_config/unreal_struct.pest"]
 pub struct UnrealSturctParser;
 
 #[derive(Debug)]
