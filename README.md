@@ -1,6 +1,6 @@
 # PalBoard
 
-[![Build Frontend](https://github.com/shirok1/palboard/actions/workflows/frontend.yml/badge.svg)](https://github.com/shirok1/palboard/actions/workflows/frontend.yml) [![Build Gateway](https://github.com/shirok1/palboard/actions/workflows/gateway.yml/badge.svg)](https://github.com/shirok1/palboard/actions/workflows/gateway.yml)
+[![Build Frontend](https://github.com/shirok1/palboard/actions/workflows/frontend.yml/badge.svg)](https://github.com/shirok1/palboard/actions/workflows/frontend.yml) [![Build Gateway](https://github.com/shirok1/palboard/actions/workflows/gateway.yml/badge.svg)](https://github.com/shirok1/palboard/actions/workflows/gateway.yml) [![Build Docker Image](https://github.com/shirok1/palboard/actions/workflows/docker-image.yml/badge.svg)](https://github.com/shirok1/palboard/actions/workflows/docker-image.yml)
 
 A [Palworld](https://www.pocketpair.jp/palworld) dashboard, built with [Nuxt](https://nuxtjs.org/) and [Axum](https://github.com/tokio-rs/axum).
 
@@ -36,9 +36,23 @@ RUST_LOG=debug cargo run
 
 ## Features
 
-![Screenshot of "Player List"](./assets/player_list.webp)
+### SteamCMD Integration
+
+If you are using the provided Docker compose file, installing or updating the game server is as simple as clicking a button on the web interface.
+
+![Screenshot of updating](./assets/updating.gif)
+
+There are also options to skip verification or updating only Steam itself if you are in a hurry.
+
+### Configuration Editor
+
+A [Monaco Editor](https://microsoft.github.io/monaco-editor/) is embedded to edit `PalWorldSettings.ini` on the web interface.
+
+![Screenshot of "Config Editor"](./assets/config_editor.webp)
 
 ### RCON Commands
+
+![Screenshot of "Player List"](./assets/player_list.webp)
 
 See description on <https://tech.palworldgame.com/server-commands>.
 
@@ -61,18 +75,12 @@ Symbols: ✔️(Complete), 🚧 (Work in Progress), ❌ (Incomplete), 🚫 (Impo
 
 Teleport commands are not available because they need player context. If further update allows teleporting players from RCON context, they would be implemented.
 
-### Docker API
-
-Unimplemented. Possibly will be implemented with [bollard](https://lib.rs/crates/bollard).
-
 ### Future Plans
 
-- SteamCMD integration (enabling server update)
 - Container management (enabling server start/restart)
 - Configuration management
   - Parsing `DefaultPalWorldSettings.ini` is implemented (see `gateway/src/unreal_struct.rs`)
-  - The approach to control the content of `PalWorldSettings.ini` needs to be setteled before editing/generating (or unbanning, since it is not implemented on RCON interface for now) can be implemented
-  - If above is done, the management can be implemented as either a web editor (like [Monaco Editor](https://microsoft.github.io/monaco-editor/)) or a form (harder to maintain)
+  - A form-based editor for `PalWorldSettings.ini` is planned
 
 ## License
 
