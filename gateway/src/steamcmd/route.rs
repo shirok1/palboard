@@ -1,72 +1,48 @@
-use axum::extract::ws::WebSocket;
-use serde::Serialize;
-use thiserror::Error;
+use axum::{
+    extract::{ws::WebSocket, Query, WebSocketUpgrade},
+    response::Response,
+    routing::get,
+    Router,
+};
+use serde::{Deserialize, Serialize};
+
 use tokio::{
     io::AsyncBufReadExt,
-    process::{Child, ChildStdout, Command},
     spawn,
     sync::{mpsc, Mutex},
 };
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
-use tokio_util::io::{ReaderStream, StreamReader};
+use tokio_util::io::StreamReader;
 use tracing::{debug, debug_span, error, instrument, Instrument};
 
-use std::ffi::OsStr;
-use std::process::Stdio;
 use std::sync::Arc;
 
-const STEAMCMD_EXE: &str = "/home/steam/steamcmd/steamcmd.sh"; // as in cm2network/steamcmd
-#[derive(Debug)]
-pub enum UpdateType {
-    Steam,
-    Game { validate: bool },
-}
-const STEAMCMD_UPDATE_ARGS: &[&str] = &["+login", "anonymous", "+quit"];
-const STEAMCMD_UPDATE_GAME_ARGS: &[&str] = &[
-    "+force_install_dir",
-    "/home/steam/palserver",
-    "+login",
-    "anonymous",
-    "+app_update",
-    "2394010",
-    "validate",
-    "+quit",
-];
-const STEAMCMD_UPDATE_GAME_NO_VALIDATE_ARGS: &[&str] = &[
-    "+force_install_dir",
-    "/home/steam/palserver",
-    "+login",
-    "anonymous",
-    "+app_update",
-    "2394010",
-    "+quit",
-];
-const BUFFER_SIZE: usize = 128;
+use crate::steamcmd::BUFFER_SIZE;
 
-#[derive(Error, Debug)]
-pub enum SteamCMDError {
-    #[error("during spawn")]
-    SpawnError(std::io::Error),
+use super::{run_steamcmd, update_args_for, UpdateType};
+
+pub fn new_router() -> Router<()> {
+    Router::new().route("/update", get(update_steam_handler))
 }
 
-type SteamCMDResult<T> = Result<T, SteamCMDError>;
+#[derive(Debug, Deserialize)]
+struct UpdateSteamQuery {
+    game: Option<bool>,
+    validate: Option<bool>,
+}
+async fn update_steam_handler(
+    ws: WebSocketUpgrade,
+    Query(q): Query<UpdateSteamQuery>,
+) -> Response {
+    let update_type = if q.game.unwrap_or(false) {
+        UpdateType::Game {
+            validate: q.validate.unwrap_or(true),
+        }
+    } else {
+        UpdateType::Steam
+    };
 
-pub async fn run_steamcmd(
-    args: impl IntoIterator<Item = impl AsRef<OsStr>>,
-) -> SteamCMDResult<(Child, ReaderStream<ChildStdout>)> {
-    let mut child = Command::new("/bin/stdbuf")
-        .arg("--output=0")
-        .arg(STEAMCMD_EXE)
-        .args(args)
-        .stdout(Stdio::piped())
-        .spawn()
-        .map_err(SteamCMDError::SpawnError)?;
-
-    drop(child.stdin.take());
-
-    let stdout = ReaderStream::new(child.stdout.take().unwrap());
-
-    Ok((child, stdout))
+    ws.on_upgrade(|ws| update_steam(ws, update_type))
 }
 
 #[derive(Debug, Serialize)]
@@ -131,13 +107,7 @@ fn parse_line(line: &str) -> Option<UpdateSteamMessage> {
 
 #[instrument(skip_all)]
 pub async fn update_steam(ws: WebSocket, update_type: UpdateType) {
-    let (mut child, mut stdout) = run_steamcmd(match update_type {
-        UpdateType::Steam => STEAMCMD_UPDATE_ARGS,
-        UpdateType::Game { validate: true } => STEAMCMD_UPDATE_GAME_ARGS,
-        UpdateType::Game { .. } => STEAMCMD_UPDATE_GAME_NO_VALIDATE_ARGS,
-    })
-    .await
-    .unwrap();
+    let (mut child, mut stdout) = run_steamcmd(update_args_for(update_type)).await.unwrap();
 
     let (tx, rx) = mpsc::channel(BUFFER_SIZE);
 

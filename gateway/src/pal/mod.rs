@@ -9,6 +9,8 @@ use crate::rcon::RCONClient;
 use thiserror::Error;
 use tracing::instrument;
 
+pub mod route;
+
 #[derive(Debug, Clone)]
 pub struct PalServerClient {
     tx: mpsc::Sender<(String, oneshot::Sender<tokio::io::Result<String>>)>,

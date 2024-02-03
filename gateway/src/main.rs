@@ -14,129 +14,15 @@
 //     }
 // }
 
-use axum::{
-    extract::{Query, State, WebSocketUpgrade},
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::{get, post},
-    Json, Router,
+use axum::{routing::get, Router};
+use palboard_gateway::{
+    pal::{self, PalServerClient},
+    steamcmd,
 };
-use palboard_gateway::pal::{PalServerClient, PalworldCommandError};
-use serde::Deserialize;
-use serde_json::json;
 use std::env;
-use thiserror::Error;
 use tracing::{info, warn};
 
 const VERSION: Option<&str> = option_env!("VERSION");
-
-#[derive(Error, Debug)]
-enum AppError {
-    #[error("error from the inner RCON client")]
-    PalworldCommandError(#[from] PalworldCommandError),
-}
-
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong: {:?}", self),
-        )
-            .into_response()
-    }
-}
-
-type AppResult<T> = std::result::Result<T, AppError>;
-
-async fn info_handler(State(mut c): State<PalServerClient>) -> AppResult<impl IntoResponse> {
-    let body = c.info().await?;
-    Ok(body)
-}
-
-async fn players_handler(State(mut c): State<PalServerClient>) -> AppResult<impl IntoResponse> {
-    let body = c.show_players().await?;
-    let mut rdr = csv::ReaderBuilder::new()
-        .has_headers(false)
-        .from_reader(body.as_bytes());
-    let vec = rdr
-        .records()
-        .flatten()
-        .flat_map(|rec| {
-            Some(json!({
-                "name": rec.get(0)?,
-                "playeruid": rec.get(1)?,
-                "steamid": rec.get(2)?,
-            }))
-        })
-        .collect::<Vec<_>>();
-    Ok(Json(vec))
-}
-
-#[derive(Deserialize)]
-struct BroadcastRequest {
-    message: String,
-}
-
-async fn broadcast_handler(
-    State(mut c): State<PalServerClient>,
-    Json(req): Json<BroadcastRequest>,
-) -> AppResult<impl IntoResponse> {
-    Ok(c.broadcast(req.message).await?)
-}
-
-#[derive(Deserialize)]
-struct ShutdownRequest {
-    time: usize,
-    message: String,
-}
-async fn shutdown_handler(
-    State(mut c): State<PalServerClient>,
-    Json(req): Json<ShutdownRequest>,
-) -> AppResult<impl IntoResponse> {
-    Ok(c.shutdown(req.time, req.message).await?)
-}
-async fn exit_handler(State(mut c): State<PalServerClient>) -> AppResult<impl IntoResponse> {
-    Ok(c.do_exit().await?)
-}
-
-#[derive(Deserialize)]
-struct KickOrBanRequest {
-    steamid: String,
-}
-async fn kick_handler(
-    State(mut c): State<PalServerClient>,
-    Json(req): Json<KickOrBanRequest>,
-) -> AppResult<impl IntoResponse> {
-    Ok(c.kick_player(req.steamid).await?)
-}
-async fn ban_handler(
-    State(mut c): State<PalServerClient>,
-    Json(req): Json<KickOrBanRequest>,
-) -> AppResult<impl IntoResponse> {
-    Ok(c.ban_player(req.steamid).await?)
-}
-
-async fn save_handler(State(mut c): State<PalServerClient>) -> AppResult<impl IntoResponse> {
-    Ok(c.save().await?)
-}
-
-#[derive(Debug, Deserialize)]
-struct UpdateSteamQuery {
-    game: Option<bool>,
-    validate: Option<bool>,
-}
-async fn update_steam_handler(ws: WebSocketUpgrade, Query(q): Query<UpdateSteamQuery>) -> Response {
-    use palboard_gateway::steamcmd::UpdateType;
-    let update_type = if q.game.unwrap_or(false) {
-        UpdateType::Game {
-            validate: q.validate.unwrap_or(true),
-        }
-    } else {
-        UpdateType::Steam
-    };
-
-    ws.on_upgrade(|ws| palboard_gateway::steamcmd::update_steam(ws, update_type))
-}
 
 #[tokio::main]
 async fn main() {
@@ -156,23 +42,8 @@ async fn main() {
 
     let app = Router::new()
         .route("/version", get(VERSION.unwrap_or("unknown")))
-        .nest(
-            "/pal",
-            Router::new()
-                .route("/shutdown", post(shutdown_handler))
-                .route("/exit", post(exit_handler))
-                .route("/broadcast", post(broadcast_handler))
-                .route("/kick", post(kick_handler))
-                .route("/ban", post(ban_handler))
-                .route("/players", get(players_handler))
-                .route("/info", get(info_handler))
-                .route("/save", post(save_handler))
-                .with_state(client),
-        )
-        .nest(
-            "/steam",
-            Router::new().route("/update", get(update_steam_handler)),
-        );
+        .nest("/pal", pal::route::new_router(client))
+        .nest("/steam", steamcmd::route::new_router());
 
     let listener = tokio::net::TcpListener::bind(env::var("GATEWAY_ADDR").unwrap_or_else(|_| {
         warn!("you should set `GATEWAY_ADDR` environment variable, frontend will connect to this address");
